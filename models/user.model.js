@@ -20,10 +20,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    chatList: {
-        type: Array,
-        default: []
-    }
 }, {timestamps: true})
 
 module.exports = mongoose.model("user", userSchema)
