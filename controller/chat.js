@@ -3,6 +3,7 @@ const Chat = require("../models/chat.model")
 const User = require("../models/user.model")
 
 const sendMessage = async (req, res) => {
+    // body = {userId, message, to}
 
     const messagesId = req.body.user.userId > req.body.to
                      ? req.body.user.userId + req.body.to
@@ -13,28 +14,42 @@ const sendMessage = async (req, res) => {
             senderId: req.body.userId,
             message: req.body.message,
             messagesId: messagesId,
-            isReceived: false
         })
 
         const chat = await newChat.save()
         const {_id, __v, ...data} = chat._doc
+
+        global.io.to(req.body.to).emit('chat', data)
         res.status(200).json(data)
     } catch (err) {
         res.status(500).json(err)
+        console.log(err);
     }
 }
 
 const getMessage = async (req, res) => {
     try {
         const chats = await Chat
-        .find({messagesId: req.body.messagesId, isReceived: false})
+        .find({messagesId: req.params.messagesId})
         .select('-_id -isReceived -createdAt').exec()
 
-        if(chats.length === 0) res.status(404).json({msg: "messages not found"})
+        if(chats.length === 0) {
+            res.status(404).json({msg: "messages not found"})
+            return;
+        }
         res.status(200).json(chats)
     } catch (err) {
         res.status(500).json(err)
     }
 }
 
-module.exports = { sendMessage, getMessage }
+const sendImage = async (req, res) => {
+    const file = req.file.filename
+    if (!file) {
+        res.status(400).json({msg: "no file selected"})
+        return;
+    }
+    res.status(200).json({filename: file})
+}
+
+module.exports = { sendMessage, getMessage, sendImage }

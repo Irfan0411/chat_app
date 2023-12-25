@@ -2,16 +2,35 @@ const mongoose = require("mongoose")
 const User = require("../models/user.model")
 const ChatList = require("../models/chatlist.model")
 
+const getInfoUser = (req, res) => {
+    res.status(200).json(req.body.user)
+}
+
+const getAnotherUser = async (req, res) => {
+    // params = {userId}
+
+    try {
+        const data = await User.findOne({userId: req.params.userId}).select('userId username email')
+        res.status(200).json(data)
+    } catch (err) {
+        res.status(500).json(err)
+    }
+}
 const getAllUser = async (req, res) => {
     try {
         const users = await User.find().select('userId username email')
-        res.status(200).json(users)
+        const data = users.filter(usr => {
+            return usr.userId !== req.body.user.userId
+        })
+        res.status(200).json(data)
     } catch (err) {
         res.status(500).json(err)
     }
 }
 
 const addChat = async (req, res) => {
+    // body = {to, username}
+
     const messagesId = req.body.user.userId > req.body.to
     ? req.body.user.userId + req.body.to
     : req.body.to + req.body.user.userId
@@ -29,7 +48,7 @@ const addChat = async (req, res) => {
             userId: req.body.to,
             conversation: {
                 userId: req.body.user.userId,
-                username: req.body.user.userId
+                username: req.body.user.username
             },
             messagesId: messagesId
         })
@@ -56,4 +75,4 @@ const getChatList = async (req, res) => {
     }
 }
 
-module.exports = { getAllUser, addChat, getChatList }
+module.exports = { getInfoUser, getAllUser, getAnotherUser, addChat, getChatList }
