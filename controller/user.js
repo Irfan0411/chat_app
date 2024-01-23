@@ -56,7 +56,17 @@ const addChat = async (req, res) => {
         const senderOk = await sender.save()
         const receiverOk = await receiver.save()
 
-        if(senderOk && receiverOk) res.sendStatus(201)
+        const data = {
+            messagesId,
+            conversation: {
+                userId: req.body.user.userId,
+                username: req.body.user.username
+            }
+        }
+        if(senderOk && receiverOk){
+            global.io.to(req.body.to).emit("newChat", data)
+            res.status(201).json({messagesId})
+        }
     } catch (err) {
         res.status(500).json(err)
     }
