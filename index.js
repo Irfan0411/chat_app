@@ -30,10 +30,10 @@ mongoose.connect(MONGO_URL)
 .catch(()=>console.log("database connection failed"))
 
 // MIDDLEWARE
-app.use(cors())
+app.use(cors({origin: "http://localhost:5173"}))
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
-app.use(helmet())
+app.use(helmet.crossOriginResourcePolicy({policy: "cross-origin"}))
 app.use(cookieSession({
     name: "chat-session",
     keys: ["COOKIE_SECRET"],

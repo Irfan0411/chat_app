@@ -85,4 +85,18 @@ const getChatList = async (req, res) => {
     }
 }
 
-module.exports = { getInfoUser, getAllUser, getAnotherUser, addChat, getChatList }
+const editProfile = async (req, res) => {
+    try {
+        const update = {
+            username: req.body.username,
+            avatar: req.body.avatar
+        }
+         const doc = await User.findByIdAndUpdate(req.body.user._id, update)
+         await doc.save()
+         res.sendStatus(204)
+    } catch (err) {
+        res.status(500).json(err)
+    }
+}
+
+module.exports = { getInfoUser, getAllUser, getAnotherUser, addChat, getChatList, editProfile }

@@ -32,7 +32,7 @@ const login = async (req, res) => {
         const validPassword = await bcrypt.compare(req.body.password, user.password)
         !validPassword && res.status(400).json({msg: "wrong password"})
         
-        const {_id, __v, password, createdAt, updatedAt, ...data} = user._doc
+        const {__v, password, createdAt, updatedAt, ...data} = user._doc
         const Token = jwt.sign(data, process.env.SECRET_KEY, { expiresIn: '1d' })
         
         res.cookie('Token', Token, {
