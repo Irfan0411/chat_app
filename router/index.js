@@ -12,11 +12,11 @@ router.get("/info", verifyToken, getInfoUser)
 router.get("/user",verifyToken, getAllUser)
 router.get("/user/:userId", getAnotherUser)
 router.post("/chatlist", verifyToken, addChat)
-router.get("/chatlist", verifyToken, getChatList)
+router.get("/chatlist/", verifyToken, getChatList)
 router.post("/user/update", verifyToken, editProfile)
 
 router.post("/chat", verifyToken, sendMessage)
-router.get("/chat/:messagesId", verifyToken, getMessage)
+router.get("/chat/:receiverId", verifyToken, getMessage)
 router.post("/chat/image", verifyToken, multerMiddleware.single("file"), sendImage)
 
 module.exports = router

@@ -3,7 +3,7 @@ const Chat = require("../models/chat.model")
 const User = require("../models/user.model")
 
 const sendMessage = async (req, res) => {
-    // body = {userId, message, to}
+    // body = {message, to}
 
     const messagesId = req.body.user.userId > req.body.to
                      ? req.body.user.userId + req.body.to
@@ -11,7 +11,7 @@ const sendMessage = async (req, res) => {
 
     try {
         const newChat = new Chat({
-            senderId: req.body.userId,
+            senderId: req.body.user.userId,
             message: req.body.message,
             messagesId: messagesId,
         })
@@ -19,7 +19,7 @@ const sendMessage = async (req, res) => {
         const chat = await newChat.save()
         const {_id, __v, ...data} = chat._doc
 
-        global.io.to(req.body.to).emit('chat', data)
+        global.io.to(req.body.to).emit('chat', {...data, receiverId: req.body.to})
         res.status(200).json(data)
     } catch (err) {
         res.status(500).json(err)
@@ -28,10 +28,14 @@ const sendMessage = async (req, res) => {
 }
 
 const getMessage = async (req, res) => {
+    const messagesId = req.body.user.userId > req.params.receiverId
+    ? req.body.user.userId + req.params.receiverId
+    : req.params.receiverId + req.body.user.userId
+
     try {
         const chats = await Chat
-        .find({messagesId: req.params.messagesId})
-        .select('-_id -isReceived -createdAt').exec()
+        .find({messagesId})
+        .select('message senderId createdAt').exec()
 
         if(chats.length === 0) {
             res.status(404).json({msg: "messages not found"})

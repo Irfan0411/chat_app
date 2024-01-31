@@ -21,6 +21,11 @@ const userSchema = new mongoose.Schema({
         default: "avatar1.png",
         required: true
     },
+    chatList: {
+        type: Array,
+        default: [],
+        required: true
+    },
     password: {
         type: String,
         required: true

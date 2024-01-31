@@ -1,16 +1,19 @@
-const mongoose = require("mongoose")
 const User = require("../models/user.model")
-const ChatList = require("../models/chatlist.model")
 
-const getInfoUser = (req, res) => {
-    res.status(200).json(req.body.user)
+const getInfoUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.body.user._id).select('-createdAt -updatedAt -__v -password')
+        if (user) res.status(200).json(user)
+    } catch (err) {
+        res.status(500).json(err)
+    }
 }
 
 const getAnotherUser = async (req, res) => {
     // params = {userId}
 
     try {
-        const data = await User.findOne({userId: req.params.userId}).select('userId username email')
+        const data = await User.findOne({userId: req.params.userId}).select('userId username email avatar')
         res.status(200).json(data)
     } catch (err) {
         res.status(500).json(err)
@@ -18,7 +21,7 @@ const getAnotherUser = async (req, res) => {
 }
 const getAllUser = async (req, res) => {
     try {
-        const users = await User.find().select('userId username email')
+        const users = await User.find().select('userId username email avatar')
         const data = users.filter(usr => {
             return usr.userId !== req.body.user.userId
         })
@@ -29,43 +32,20 @@ const getAllUser = async (req, res) => {
 }
 
 const addChat = async (req, res) => {
-    // body = {to, username}
-
-    const messagesId = req.body.user.userId > req.body.to
-    ? req.body.user.userId + req.body.to
-    : req.body.to + req.body.user.userId
+    // body = {to}
 
     try {
-        const sender = new ChatList({
-            userId: req.body.user.userId,
-            conversation: {
-                userId: req.body.to,
-                username: req.body.username
-            },
-            messagesId: messagesId
-        })
-        const receiver = new ChatList({
-            userId: req.body.to,
-            conversation: {
-                userId: req.body.user.userId,
-                username: req.body.user.username
-            },
-            messagesId: messagesId
-        })
+        const chatListSender = await User.findById(req.body.user._id).select('chatList')
+        const newChatListSender = [...chatListSender.chatList, req.body.to]
+        const sender = await User.findByIdAndUpdate(req.body.user._id, {chatList: newChatListSender})
 
-        const senderOk = await sender.save()
-        const receiverOk = await receiver.save()
+        const chatLlistReceiver = await User.findOne({userId: req.body.to}).select('chatList')
+        const newChatListReceiver = [...chatLlistReceiver.chatList, req.body.user.userId]
+        const receiver = await User.findOneAndUpdate({userId: req.body.to}, {chatList: newChatListReceiver})
 
-        const data = {
-            messagesId,
-            conversation: {
-                userId: req.body.user.userId,
-                username: req.body.user.username
-            }
-        }
-        if(senderOk && receiverOk){
-            global.io.to(req.body.to).emit("newChat", data)
-            res.status(201).json({messagesId})
+        if(sender && receiver) {
+            global.io.to(req.body.to).emit("newChat", req.body.user)
+            res.sendStatus(201)
         }
     } catch (err) {
         res.status(500).json(err)
@@ -74,9 +54,9 @@ const addChat = async (req, res) => {
 
 const getChatList = async (req, res) => {
     try {
-        const chatList = await ChatList
-        .find({userId: req.body.user.userId})
-        .select('conversation messagesId')
+        const chatList = await User
+        .find({userId: {$in: req.query.chatList}})
+        .select('username userId avatar')
         .exec()
         
         res.status(200).json(chatList)
@@ -93,7 +73,7 @@ const editProfile = async (req, res) => {
         }
          const doc = await User.findByIdAndUpdate(req.body.user._id, update)
          await doc.save()
-         res.sendStatus(204)
+         res.status(200).json({msg: "updated"})
     } catch (err) {
         res.status(500).json(err)
     }
