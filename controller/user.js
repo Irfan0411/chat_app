@@ -10,7 +10,7 @@ const getInfoUser = async (req, res) => {
 }
 
 const getAnotherUser = async (req, res) => {
-    // params = {userId}
+    // params = {userId}   
 
     try {
         const data = await User.findOne({userId: req.params.userId}).select('userId username email avatar')
