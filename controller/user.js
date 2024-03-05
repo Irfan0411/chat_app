@@ -44,7 +44,8 @@ const addChat = async (req, res) => {
         const receiver = await User.findOneAndUpdate({userId: req.body.to}, {chatList: newChatListReceiver})
 
         if(sender && receiver) {
-            global.io.to(req.body.to).emit("newChat", req.body.user)
+            const { username, userId, email, avatar, ...other } = req.body.user
+            global.io.to(req.body.to).emit("newChat", {username, userId, email, avatar})
             res.sendStatus(201)
         }
     } catch (err) {

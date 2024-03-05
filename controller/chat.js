@@ -5,19 +5,20 @@ const User = require("../models/user.model")
 const sendMessage = async (req, res) => {
     // body = {message, to}
 
-    const messagesId = req.body.user.userId > req.body.to
-                     ? req.body.user.userId + req.body.to
-                     : req.body.to + req.body.user.userId
-
+    
     try {
+        const idMessages = req.body.user.userId > req.body.to
+                         ? req.body.user.userId + req.body.to
+                         : req.body.to + req.body.user.userId
+
         const newChat = new Chat({
             senderId: req.body.user.userId,
             message: req.body.message,
-            messagesId: messagesId,
+            messagesId: idMessages,
         })
 
         const chat = await newChat.save()
-        const {_id, __v, ...data} = chat._doc
+        const {_id, __v, messagesId, updatedAt, ...data} = chat._doc
 
         global.io.to(req.body.to).emit('chat', {...data, receiverId: req.body.to})
         res.status(200).json(data)
